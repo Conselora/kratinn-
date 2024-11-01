@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creatin Hatırlatıcı</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            text-align: center;
+            position: relative; 
+        }
+        h1 {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input {
+            padding: 12px;
+            margin: 5px 0;
+            width: calc(100% - 20px);
+            box-sizing: border-box;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #0056b3;
+            outline: none;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 15px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+        }
+        #results {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #343a40;
+            display: none; 
+        }
+        #inputFields {
+            display: none; 
+        }
+        .footer {
+            position: absolute; 
+            bottom: 10px;
+            right: 10px;
+            font-size: 14px;
+            color: #555;
+            font-style: italic; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Creatin Hatırlatıcı</h1>
+        <button class="button" onclick="showInputFields()">Gün Sayısını Güncelle</button>
+        <div id="inputFields">
+            <div>
+                <label for="creatinDays">Creatin Günleri:</label>
+                <input type="number" id="creatinDays" min="1" value="">
+            </div>
+            <div>
+                <label for="restDays">Dinlenme:</label>
+                <input type="number" id="restDays" min="1" value="">
+            </div>
+            <button class="button" onclick="startCycle()">Döngüyü Başlat</button>
+        </div>
+        <p id="status" class="status">Creatin kullanım döngüsü başlatılmadı.</p>
+        <div id="results"></div>
+        <div class="footer">Designed by Conselora</div>
+    </div>
+
+    <script>
+        let kullanGunu = localStorage.getItem('kullanGunu') ? parseInt(localStorage.getItem('kullanGunu')) : null;
+        let araGunu = localStorage.getItem('araGunu') ? parseInt(localStorage.getItem('araGunu')) : null;
+        let kalanGun = localStorage.getItem('kalanGun') ? parseInt(localStorage.getItem('kalanGun')) : 0;
+        let toplamKullanilan = localStorage.getItem('toplamKullanilan') ? parseInt(localStorage.getItem('toplamKullanilan')) : 0;
+        let isCreatinGunu = localStorage.getItem('isCreatinGunu') === 'true'; 
+        let interval;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (kullanGunu && araGunu) {
+                document.getElementById('creatinDays').value = kullanGunu; 
+                document.getElementById('restDays').value = araGunu; 
+                updateDisplay();
+                if (kalanGun > 0) {
+                    startCycle(); 
+                }
+            }
+        });
+
+        function showInputFields() {
+            document.getElementById('inputFields').style.display = 'block'; 
+            document.querySelector('.button').style.display = 'none'; // Butonu gizle
+        }
+
+        function startCycle() {
+            kullanGunu = parseInt(document.getElementById('creatinDays').value) || 40; 
+            araGunu = parseInt(document.getElementById('restDays').value) || 30; 
+
+            localStorage.setItem('kullanGunu', kullanGunu); 
+            localStorage.setItem('araGunu', araGunu); 
+            
+            kalanGun = kullanGunu;
+            toplamKullanilan = 0;
+            localStorage.setItem('kalanGun', kalanGun); 
+            localStorage.setItem('toplamKullanilan', toplamKullanilan); 
+            updateDisplay();
+            clearInterval(interval); 
+            interval = setInterval(countdown, 86400000); 
+            scheduleDailyNotification();
+            document.getElementById('inputFields').style.display = 'none';
+            document.getElementById('results').style.display = 'block';
+            document.querySelector('.button').style.display = 'block'; // Butonu geri getir
+        }
+
+        function countdown() {
+            kalanGun--;
+            toplamKullanilan++;
+            localStorage.setItem('kalanGun', kalanGun); 
+            localStorage.setItem('toplamKullanilan', toplamKullanilan); 
+            
+            if (kalanGun <= 0) {
+                isCreatinGunu = !isCreatinGunu;
+                kalanGun = isCreatinGunu ? kullanGunu : araGunu;
+            }
+            localStorage.setItem('isCreatinGunu', isCreatinGunu); 
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+
+            status.textContent = isCreatinGunu ? "Creatin Alma Günü" : "Detaylar"; // "Dinlenme" yerine "Detaylar" olarak değiştirildi
+            results.textContent = `Creatin Günleri: ${kullanGunu}, Toplam Kullandığınız Gün: ${toplamKullanilan}`; // "Detaylar" kısmı kaldırıldı
+        }
+
+        function scheduleDailyNotification() {
+            if (Notification.permission === "granted") {
+                const now = new Date();
+                const timeUntil8PM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 20, 0, 0, 0) - now;
+
+                setTimeout(function() {
+                    sendNotification();
+                    setInterval(sendNotification, 86400000); 
+                }, timeUntil8PM);
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        scheduleDailyNotification();
+                    }
+                });
+            }
+        }
+
+        function sendNotification() {
+            const message = isCreatinGunu ? "Creatin alma zamanı!" : "Bugün dinlenme günü.";
+            new Notification("Creatin Hatırlatıcı", { body: message });
+        }
+    </script>
+</body>
+</html>
